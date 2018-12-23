@@ -23,6 +23,9 @@ import ContourLayer from '@deck.gl/layers/contour-layer/contour-layer';
 import * as dataSamples from '../data-samples';
 import {parseColor, setOpacity} from '../utils/color';
 
+import Octokit from '@octokit/rest';
+const octokit = new Octokit();
+
 const LIGHT_SETTINGS = {
   lightsPosition: [-122.45, 37.66, 8000, -122.0, 38.0, 8000],
   ambientRatio: 0.3,
@@ -62,6 +65,73 @@ const IconLayerExample = {
     getColor: d => [64, 64, 72],
     getIcon: d => (d.PLACEMENT === 'SW' ? 'marker' : 'marker-warning'),
     getSize: d => (d.RACKS > 2 ? 2 : 1),
+    opacity: 0.8,
+    pickable: true
+  }
+};
+
+const IconLayerAutoPackingExample = {
+  layer: IconLayer,
+  getData: () => dataSamples.points,
+  props: {
+    id: 'icon-layer-experimental',
+    sizeScale: 24,
+    getPosition: d => d.COORDINATES,
+    getColor: d => [64, 64, 72],
+    getIcon: d => {
+      if (d.PLACEMENT === 'SW') {
+        return {
+          url: 'data/icon-marker.png',
+          width: 128,
+          height: 128,
+          anchorY: 128,
+          mask: true
+        };
+      }
+      return {
+        url: 'data/icon-warning.png',
+        width: 128,
+        height: 128,
+        anchorY: 128,
+        mask: false
+      };
+    },
+    getSize: d => {
+      return d.RACKS > 2 ? 2 : 1;
+    },
+    opacity: 0.8,
+    pickable: true
+  }
+};
+
+const IconLayerGithubExample = {
+  layer: IconLayer,
+  props: {
+    data: octokit.repos
+      .listContributors({
+        owner: 'uber',
+        repo: 'deck.gl'
+      })
+      .then(result => {
+        const data = result.data.slice(0, 3);
+        data.forEach((d, i) => Object.assign(d, dataSamples.points[i]));
+        return data;
+      }),
+    id: 'icon-layer-experimental',
+    sizeScale: 24,
+    getPosition: d => d.COORDINATES,
+    getColor: d => [64, 64, 72],
+    getIcon: d => {
+      return {
+        url: d.avatar_url,
+        width: 500,
+        height: 500,
+        anchorY: 500
+      };
+    },
+    getSize: d => {
+      return Math.max(5, Math.min((d.contributions / 1000) * 25, 25));
+    },
     opacity: 0.8,
     pickable: true
   }
@@ -388,6 +458,8 @@ export default {
     LineLayer: LineLayerExample,
     LineLayerNewCoords: LineLayerExampleNewCoords,
     IconLayer: IconLayerExample,
+    'IconLayer (auto packing)': IconLayerAutoPackingExample,
+    'IconLayer (test)': IconLayerGithubExample,
     GridCellLayer: GridCellLayerExample,
     GridLayer: GridLayerExample,
     ScreenGridLayer: ScreenGridLayerExample,
