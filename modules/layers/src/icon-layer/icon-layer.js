@@ -125,23 +125,32 @@ export default class IconLayer extends Layer {
     const {iconManager} = this.state;
     const attributeManager = this.getAttributeManager();
 
-    if (
+    const {iconAtlas, iconMapping, data, getIcon} = props;
+
+    let iconMappingChanged = false;
+
+    // prepacked iconAtlas from user
+    if (iconAtlas) {
+      iconMappingChanged = oldProps.iconMapping !== props.iconMapping;
+
+      if (oldProps.iconAtlas !== props.iconAtlas) {
+        iconManager.updateState({iconAtlas, iconMapping, data, getIcon});
+      }
+
+      // auto pack iconAtlas in IconManager
+    } else if (
       changeFlags.dataChanged ||
       changeFlags.updateTriggersChanged.all ||
-      changeFlags.updateTriggersChanged.getIcon ||
-      oldProps.iconAtlas !== props.iconAtlas ||
-      oldProps.iconMapping !== props.iconMapping
+      changeFlags.updateTriggersChanged.getIcon
     ) {
-      const {iconAtlas, iconMapping, data, getIcon} = props;
       iconManager.updateState({iconAtlas, iconMapping, data, getIcon});
+      iconMappingChanged = true;
+    }
 
-      // if props do not have iconAtlas, in this case, iconMapping is re-generated in iconManager
-      // otherwise, check if props.iconMapping changed
-      if (!props.iconAtlas || oldProps.iconMapping !== props.iconMapping) {
-        attributeManager.invalidate('instanceOffsets');
-        attributeManager.invalidate('instanceIconFrames');
-        attributeManager.invalidate('instanceColorModes');
-      }
+    if (iconMappingChanged) {
+      attributeManager.invalidate('instanceOffsets');
+      attributeManager.invalidate('instanceIconFrames');
+      attributeManager.invalidate('instanceColorModes');
     }
 
     if (props.fp64 !== oldProps.fp64) {
