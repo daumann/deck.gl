@@ -82,7 +82,11 @@ test('IconManager#buildMapping', t => {
     '/icon/4': Object.assign({}, data[4].icon, {x: 0, y: 60})
   };
 
-  const {mapping, canvasHeight} = buildMapping({icons: data.map(d => d.icon), maxCanvasWidth: 64});
+  const {mapping, canvasHeight} = buildMapping({
+    icons: data.map(d => d.icon),
+    padding: 0,
+    maxCanvasWidth: 64
+  });
 
   t.deepEqual(mapping, expected, 'Should generate mapping as expectation.');
   t.equal(canvasHeight, 128, 'Canvas height should match expectation.');

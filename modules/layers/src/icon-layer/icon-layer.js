@@ -71,17 +71,8 @@ export default class IconLayer extends Layer {
   }
 
   initializeState() {
-    const {data, getIcon, iconAtlas, iconMapping} = this.props;
     this.state = {
-      // iconsTexture: null,
-      // iconMapping: {},
-      iconManager: new IconManager(this.context.gl, {
-        data,
-        iconAtlas,
-        iconMapping,
-        getIcon,
-        onUpdate: state => this._onUpdate(state)
-      })
+      iconManager: new IconManager(this.context.gl, state => this._onUpdate(state))
     };
 
     const attributeManager = this.getAttributeManager();
@@ -132,7 +123,26 @@ export default class IconLayer extends Layer {
     super.updateState({props, oldProps, changeFlags});
 
     const {iconManager} = this.state;
-    iconManager.updateState({oldProps, props, changeFlags});
+    const attributeManager = this.getAttributeManager();
+
+    if (
+      changeFlags.dataChanged ||
+      changeFlags.updateTriggersChanged.all ||
+      changeFlags.updateTriggersChanged.getIcon ||
+      oldProps.iconAtlas !== props.iconAtlas ||
+      oldProps.iconMapping !== props.iconMapping
+    ) {
+      const {iconAtlas, iconMapping, data, getIcon} = props;
+      iconManager.updateState({iconAtlas, iconMapping, data, getIcon});
+
+      // if props do not have iconAtlas, in this case, iconMapping is re-generated in iconManager
+      // otherwise, check if props.iconMapping changed
+      if (!props.iconAtlas || oldProps.iconMapping !== props.iconMapping) {
+        attributeManager.invalidate('instanceOffsets');
+        attributeManager.invalidate('instanceIconFrames');
+        attributeManager.invalidate('instanceColorModes');
+      }
+    }
 
     if (props.fp64 !== oldProps.fp64) {
       const {gl} = this.context;
@@ -140,7 +150,7 @@ export default class IconLayer extends Layer {
         this.state.model.delete();
       }
       this.setState({model: this._getModel(gl)});
-      this.getAttributeManager().invalidateAll();
+      attributeManager.invalidateAll();
     }
   }
 
@@ -179,16 +189,9 @@ export default class IconLayer extends Layer {
     );
   }
 
-  _onUpdate({textureChanged, mappingChanged}) {
+  _onUpdate({textureChanged}) {
     if (textureChanged) {
       this.setNeedsRedraw();
-    }
-
-    if (mappingChanged) {
-      const attributeManager = this.getAttributeManager();
-      attributeManager.invalidate('instanceOffsets');
-      attributeManager.invalidate('instanceIconFrames');
-      attributeManager.invalidate('instanceColorModes');
     }
   }
 
@@ -212,36 +215,36 @@ export default class IconLayer extends Layer {
   }
 
   calculateInstanceOffsets(attribute) {
-    const {data} = this.props;
+    const {data, getIcon} = this.props;
     const {iconManager} = this.state;
     const {value} = attribute;
     let i = 0;
     for (const object of data) {
-      const rect = iconManager.getIconMapping(object);
+      const rect = iconManager.getIconMapping(object, getIcon);
       value[i++] = rect.width / 2 - rect.anchorX || 0;
       value[i++] = rect.height / 2 - rect.anchorY || 0;
     }
   }
 
   calculateInstanceColorMode(attribute) {
-    const {data} = this.props;
+    const {data, getIcon} = this.props;
     const {iconManager} = this.state;
     const {value} = attribute;
     let i = 0;
     for (const object of data) {
-      const mapping = iconManager.getIconMapping(object);
+      const mapping = iconManager.getIconMapping(object, getIcon);
       const colorMode = mapping.mask;
       value[i++] = colorMode ? 1 : 0;
     }
   }
 
   calculateInstanceIconFrames(attribute) {
-    const {data} = this.props;
+    const {data, getIcon} = this.props;
     const {iconManager} = this.state;
     const {value} = attribute;
     let i = 0;
     for (const object of data) {
-      const rect = iconManager.getIconMapping(object);
+      const rect = iconManager.getIconMapping(object, getIcon);
       value[i++] = rect.x || 0;
       value[i++] = rect.y || 0;
       value[i++] = rect.width || 0;
