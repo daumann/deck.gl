@@ -47,13 +47,13 @@ test('IconManager#buildMapping', t => {
 
   /*
    *   +-----------+----------------+----------------+
-   *   | /icon/0 | /icon/1          |                |
-   *   |         |                  |                |
-   *   |         |                  |                |
-   *   |         |                  |                |
-   *   |         |                  |                |
-   *   |         |                  |                |
-   *   +---------+------------------+----------------+
+   *   | /icon/0   | /icon/1        |                |
+   *   |           |                |                |
+   *   |           |                |                |
+   *   |           |                |                |
+   *   |           |                |                |
+   *   |           |                |                |
+   *   +-----------+----------------+-----------+----+
    *   | /icon/2                    | /icon/3   |    |
    *   |                            |           |    |
    *   |                            |           |    |
@@ -62,7 +62,7 @@ test('IconManager#buildMapping', t => {
    *   |                            |           |    |
    *   |                            |           |    |
    *   |                            |           |    |
-   *   +----------------------------+-----------+----+
+   *   +---------------------+------+-----------+----+
    *   | /icon/4             |                       |
    *   |                     |                       |
    *   |                     |                       |
@@ -71,20 +71,20 @@ test('IconManager#buildMapping', t => {
    *   |                     |                       |
    *   |                     |                       |
    *   |                     |                       |
-   *   +-------------------+----------+--------------+
+   *   +---------------------+-----------------------+
   */
 
   const expected = {
     '/icon/0': Object.assign({}, data[0].icon, {x: 0, y: 0}),
-    '/icon/1': Object.assign({}, data[1].icon, {x: 12, y: 0}),
-    '/icon/2': Object.assign({}, data[2].icon, {x: 0, y: 24}),
-    '/icon/3': Object.assign({}, data[3].icon, {x: 36, y: 24}),
-    '/icon/4': Object.assign({}, data[4].icon, {x: 0, y: 60})
+    '/icon/1': Object.assign({}, data[1].icon, {x: 14, y: 0}),
+    '/icon/2': Object.assign({}, data[2].icon, {x: 0, y: 26}),
+    '/icon/3': Object.assign({}, data[3].icon, {x: 38, y: 26}),
+    '/icon/4': Object.assign({}, data[4].icon, {x: 0, y: 64})
   };
 
   const {mapping, canvasHeight} = buildMapping({
     icons: data.map(d => d.icon),
-    padding: 0,
+    buffer: 2,
     maxCanvasWidth: 64
   });
 

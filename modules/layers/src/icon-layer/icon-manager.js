@@ -3,7 +3,7 @@ import GL from '@luma.gl/constants';
 import {Texture2D, loadImages, loadTextures} from 'luma.gl';
 
 const MAX_CANVAS_WIDTH = 1024;
-const DEFAULT_PADDING = 4;
+const DEFAULT_BUFFER = 4;
 
 const DEFAULT_TEXTURE_MIN_FILTER = GL.LINEAR_MIPMAP_LINEAR;
 // GL.LINEAR is the default value but explicitly set it here
@@ -30,11 +30,11 @@ function buildRowMapping(mapping, columns, yOffset) {
 /**
  * Generate coordinate mapping to retrieve icon left-top position from an icon atlas
  * @param icons {Array<Object>} list of icons, each icon requires url, width, height
- * @param padding {Number}
+ * @param buffer {Number} add buffer to the right and bottom side of the image
  * @param maxCanvasHeight {Number}
  * @returns {{mapping: {'/icon/1': {url, width, height, ...}},, canvasHeight: {Number}}}
  */
-export function buildMapping({icons, padding, maxCanvasWidth}) {
+export function buildMapping({icons, buffer, maxCanvasWidth}) {
   // x position till current column
   let xOffset = 0;
   // y position till current row
@@ -58,11 +58,11 @@ export function buildMapping({icons, padding, maxCanvasWidth}) {
       const {height, width} = icon;
 
       // fill one row
-      if (xOffset + width + padding > maxCanvasWidth) {
+      if (xOffset + width + buffer > maxCanvasWidth) {
         buildRowMapping(mapping, columns, yOffset);
 
         xOffset = 0;
-        yOffset = rowHeight + yOffset + padding;
+        yOffset = rowHeight + yOffset + buffer;
         rowHeight = 0;
         columns = [];
       }
@@ -72,7 +72,7 @@ export function buildMapping({icons, padding, maxCanvasWidth}) {
         xOffset
       });
 
-      xOffset = xOffset + width + padding;
+      xOffset = xOffset + width + buffer;
       rowHeight = Math.max(rowHeight, height);
     }
   }
@@ -81,7 +81,7 @@ export function buildMapping({icons, padding, maxCanvasWidth}) {
     buildRowMapping(mapping, columns, yOffset);
   }
 
-  const canvasHeight = nextPowOfTwo(rowHeight + yOffset);
+  const canvasHeight = nextPowOfTwo(rowHeight + yOffset + buffer);
 
   return {
     mapping,
@@ -128,7 +128,7 @@ export default class IconManager {
       this._updateAutoPacking({
         data,
         getIcon,
-        padding: DEFAULT_PADDING,
+        buffer: DEFAULT_BUFFER,
         maxCanvasWidth: MAX_CANVAS_WIDTH
       });
     }
@@ -158,13 +158,13 @@ export default class IconManager {
     }
   }
 
-  _updateAutoPacking({data, getIcon, padding, maxCanvasWidth}) {
+  _updateAutoPacking({data, getIcon, buffer, maxCanvasWidth}) {
     let icons = Object.values(getIcons(data, getIcon) || {});
     if (icons.length > 0) {
       // generate icon mapping
       const {mapping, canvasHeight} = buildMapping({
         icons,
-        padding,
+        buffer,
         maxCanvasWidth
       });
 
